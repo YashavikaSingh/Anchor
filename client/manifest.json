@@ -1,0 +1,21 @@
+{
+  "manifest_version": 3,
+  "name": "Anchor",
+  "version": "2.0.0",
+  "description": "Most intuitive productivity AI",
+  "permissions": ["activeTab", "storage", "tabs", "scripting"],
+  "host_permissions": ["<all_urls>"],
+  "action": {
+    "default_popup": "index.html"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "js": ["src/content.tsx", "src/youtubeContent.js"],
+      "matches": ["<all_urls>"],
+      "run_at": "document_idle"
+    }
+  ]
+}

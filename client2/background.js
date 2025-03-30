@@ -7,16 +7,16 @@ let lastAnalysisId = null;
 // Config for Gemini API
 const LLM_API_CONFIG = {
   // Replace with your actual API key
-  apiKey: 'AIzaSyCzqIH2FvDdAyrJ8SZdb_fDjK4My6MqBnk',
-  model: 'models/gemini-1.5-pro'  // Use your preferred Gemini model
+  apiKey: "AIzaSyCzqIH2FvDdAyrJ8SZdb_fDjK4My6MqBnk",
+  model: "models/gemini-1.5-pro", // Use your preferred Gemini model
 };
 
 // API Endpoint for saving video data
-const API_ENDPOINT = 'http://localhost:3000/videos'; // Replace with your actual API endpoint
+const API_ENDPOINT = "http://localhost:5173/videos"; // Replace with your actual API endpoint
 
 // Listen for messages from content script or popup
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.action === 'videoChanged') {
+  if (message.action === "videoChanged") {
     // Store new video data
     currentVideoData = message.data;
 
@@ -34,18 +34,19 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
 
-  if (message.action === 'getCurrentVideo') {
+  if (message.action === "getCurrentVideo") {
     // Respond with current video data
     sendResponse({ data: currentVideoData });
     return true;
   }
 
-  if (message.action === 'analyzeVideo') {
+  if (message.action === "analyzeVideo") {
     // Check if we have video data
     if (!currentVideoData) {
       sendResponse({
         success: false,
-        error: 'No video data available. Please make sure you are on a YouTube video page.'
+        error:
+          "No video data available. Please make sure you are on a YouTube video page.",
       });
       return true;
     }
@@ -53,12 +54,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     // Check if we already analyzed this video
     if (lastAnalysisId === currentVideoData.videoId) {
       // Get the existing analysis from storage
-      chrome.storage.local.get('lastAnalysis', (data) => {
+      chrome.storage.local.get("lastAnalysis", (data) => {
         if (data.lastAnalysis) {
           sendResponse({
             success: true,
             cached: true,
-            analysis: data.lastAnalysis
+            analysis: data.lastAnalysis,
           });
         } else {
           // If not found in storage, perform new analysis
@@ -78,11 +79,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 async function saveVideoDataToDB(videoData) {
   try {
     const response = await fetch(API_ENDPOINT, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json'
+        "Content-Type": "application/json",
       },
-      body: JSON.stringify(videoData)
+      body: JSON.stringify(videoData),
     });
 
     if (!response.ok) {
@@ -90,9 +91,9 @@ async function saveVideoDataToDB(videoData) {
     }
 
     const result = await response.json();
-    console.log('Data saved to MongoDB:', result);
+    console.log("Data saved to MongoDB:", result);
   } catch (error) {
-    console.error('Error saving data to MongoDB:', error);
+    console.error("Error saving data to MongoDB:", error);
   }
 }
 
@@ -119,25 +120,25 @@ async function performAnalysis(videoData, sendResponse) {
 
     // Make API request to Gemini
     const response = await fetch(endpoint, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json'
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
         contents: [
           {
             parts: [
               {
-                text: prompt
-              }
-            ]
-          }
+                text: prompt,
+              },
+            ],
+          },
         ],
         generationConfig: {
           temperature: 0.7,
-          maxOutputTokens: 500
-        }
-      })
+          maxOutputTokens: 500,
+        },
+      }),
     });
 
     if (!response.ok) {
@@ -148,35 +149,35 @@ async function performAnalysis(videoData, sendResponse) {
 
     // Extract Gemini response
     // Check for proper response format and extract text
-    if (result.candidates &&
+    if (
+      result.candidates &&
       result.candidates[0] &&
       result.candidates[0].content &&
       result.candidates[0].content.parts &&
-      result.candidates[0].content.parts[0]) {
-
+      result.candidates[0].content.parts[0]
+    ) {
       const analysis = result.candidates[0].content.parts[0].text;
 
       // Save analysis to storage
       lastAnalysisId = videoData.videoId;
       chrome.storage.local.set({
-        lastAnalysis: analysis
+        lastAnalysis: analysis,
       });
 
       // Send response back
       sendResponse({
         success: true,
         cached: false,
-        analysis: analysis
+        analysis: analysis,
       });
     } else {
       throw new Error("Unexpected response format from Gemini API");
     }
-
   } catch (error) {
-    console.error('Error in Gemini analysis:', error);
+    console.error("Error in Gemini analysis:", error);
     sendResponse({
       success: false,
-      error: `Failed to analyze video: ${error.message}`
+      error: `Failed to analyze video: ${error.message}`,
     });
   }
 }
